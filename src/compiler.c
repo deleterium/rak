@@ -11,6 +11,7 @@
 #include "rak/compiler.h"
 #include <string.h>
 #include "rak/builtin.h"
+#include "rak/error.h"
 #include "rak/function.h"
 #include "rak/lexer.h"
 
@@ -327,8 +328,8 @@ static inline void compile_ident_list(Compiler *comp, SymbolSlice *symbols, RakE
     {
       if (rak_slice_is_full(symbols))
       {
-        rak_error_set(err, "too many destructuring variables at %d:%d",
-          tok.ln, tok.col);
+        rak_error_set(err, "too many destructuring variables");
+        rak_error_set_line_col(err, tok.ln, tok.col);
         return;
       }
       Symbol sym = {
@@ -397,6 +398,7 @@ static inline void compile_assign_stmt(Compiler *comp, RakChunk *chunk, RakError
   {
     rak_error_set(err, "variable '%.*s' used, but not defined at %d:%d",
       tok.len, tok.chars, tok.ln, tok.col);
+    rak_error_set_line_col(err, tok.ln, tok.col);
     return;
   }
   uint8_t idx = sym->idx;
@@ -601,7 +603,11 @@ static inline void compile_fn_decl(Compiler *comp, RakChunk *chunk, RakError *er
   emit_instr(&_comp, _chunk, rak_return_nil_instr(), err);
   if (!rak_is_ok(err)) goto end;
   uint8_t idx = rak_function_append_nested(comp->fn, _comp.fn, err);
-  if (!rak_is_ok(err)) goto end;
+  if (!rak_is_ok(err))
+  {
+      rak_error_set_line_col(err, tok.ln, tok.col);
+      goto end;
+  }
   emit_instr(comp, chunk, rak_new_closure_instr(idx), err);
   if (!rak_is_ok(err)) goto end;
   define_local(comp, tok, false, err);
@@ -803,16 +809,16 @@ static inline void compile_break_stmt(Compiler *comp, RakChunk *chunk, RakError 
   Loop *loop = comp->loop;
   if (!loop)
   {
-    rak_error_set(err, "break statement not in loop at %d:%d",
-      tok.ln, tok.col);
+    rak_error_set(err, "break statement not in loop");
+    rak_error_set_line_col(err, tok.ln, tok.col);
     return;
   }
   uint16_t jump = emit_instr(comp, chunk, rak_nop_instr(), err);
   if (!rak_is_ok(err)) return;
   if (rak_slice_is_full(&loop->jumps))
   {
-    rak_error_set(err, "too many break statements in loop at %d:%d",
-      tok.ln, tok.col);
+    rak_error_set(err, "too many break statements in loop");
+    rak_error_set_line_col(err, tok.ln, tok.col);
     return;
   }
   rak_slice_append(&loop->jumps, jump);

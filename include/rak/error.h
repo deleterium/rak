@@ -22,11 +22,14 @@ typedef struct
 {
   bool ok;
   char cstr[RAK_ERROR_MAX_LEN + 1];
+  int line;
+  int col;
 } RakError;
 
 void rak_error_init(RakError *err);
 void rak_error_set(RakError *err, const char *fmt, ...);
 void rak_error_set_with_args(RakError *err, const char *fmt, va_list args);
+void rak_error_set_line_col(RakError *err, int line, int col);
 void rak_error_print(RakError *err);
 
 #endif // RAK_ERROR_H
