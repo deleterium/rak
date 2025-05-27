@@ -158,7 +158,7 @@ int main(int argc, const char *argv[])
     : compile_from_stdin(&err);
   if (!rak_is_ok(&err))
   {
-    rak_error_print(&err);
+    // error already printed
     return EXIT_FAILURE;
   }
   if (has_opt(argc, argv, "-c"))

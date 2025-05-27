@@ -14,6 +14,7 @@
 #include "rak/error.h"
 #include "rak/function.h"
 #include "rak/lexer.h"
+#include "rak/string.h"
 
 #define match(c, t) ((c)->lex->tok.kind == (t))
 
@@ -1707,6 +1708,7 @@ RakClosure *rak_compile(RakString *file, RakString *source, RakError *err)
   compiler_deinit(&comp);
   return cl;
 fail:
+  rak_error_print_compile(err, rak_string_chars(lex.source));
   rak_lexer_deinit(&lex);
   compiler_deinit(&comp);
   return NULL;

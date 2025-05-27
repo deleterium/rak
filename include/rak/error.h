@@ -31,5 +31,6 @@ void rak_error_set(RakError *err, const char *fmt, ...);
 void rak_error_set_with_args(RakError *err, const char *fmt, va_list args);
 void rak_error_set_line_col(RakError *err, int line, int col);
 void rak_error_print(RakError *err);
+void rak_error_print_compile(RakError *err, char *sourceCode);
 
 #endif // RAK_ERROR_H

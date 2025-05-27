@@ -10,6 +10,7 @@
 
 #include "rak/error.h"
 #include <stdio.h>
+#include <string.h>
 
 void rak_error_init(RakError *err)
 {
@@ -42,9 +43,44 @@ void rak_error_set_line_col(RakError *err, int line, int col)
 
 void rak_error_print(RakError *err)
 {
-  if (err->line) {
-    fprintf(stderr, "ERROR at %d:%d - %s\n", err->line, err->col, err->cstr);
+  fprintf(stderr, "ERROR: %s\n", err->cstr);
+}
+
+void get_line_and_len(char * sourceCode, int line, char **charLine, int *len)
+{
+  int currLine = 0;
+  int curr = 0;
+  do
+  {
+    *charLine = sourceCode + curr;
+    char *e = strchr(*charLine, '\n');
+    if (e == NULL)
+    {
+      e = strchr(*charLine, '\0');
+      if (e == NULL) return;
+    }
+    *len = (int)(e - *charLine);
+    currLine++;
+    curr += *len + 1;
+  } while (currLine < line);
+  return;
+}
+
+void rak_error_print_compile(RakError *err, char *sourceCode)
+{
+  if (!err->line)
+  {
+    rak_error_print(err);
     return;
   }
-  fprintf(stderr, "ERROR: %s\n", err->cstr);
+
+  char *charLine = NULL;
+  int len = 0;
+
+  get_line_and_len(sourceCode, err->line, &charLine, &len);
+
+  fprintf(stderr, "ERROR at %d:%d - %s\n", err->line, err->col, err->cstr);
+  fprintf(stderr, " |%.*s\n", len, charLine);
+  fprintf(stderr, " |%*s^\n", err->col - 1, "");
+  return;
 }
