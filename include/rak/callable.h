@@ -13,6 +13,7 @@
 
 #include "string.h"
 
+/// Types of functions that are Callables.
 typedef enum
 {
   RAK_CALLABLE_TYPE_FUNCTION,

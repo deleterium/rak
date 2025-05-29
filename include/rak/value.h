@@ -76,6 +76,7 @@
     rak_object_retain(rak_as_object(v)); \
   } while (0);
 
+/// Primitive types of Rak language.
 typedef enum
 {
   RAK_TYPE_NIL,
@@ -104,9 +105,10 @@ typedef struct
   RakOpaque opaque;
 } RakValue;
 
+/// Properties of an object
 typedef struct
 {
-  int refCount;
+  int refCount;   ///< Reference count. Used to track links and when the object can be freed from memory.
 } RakObject;
 
 const char *rak_type_to_cstr(RakType type);

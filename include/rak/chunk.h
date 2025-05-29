@@ -91,6 +91,7 @@
 #define rak_return_instr()           rak_instr_fmt0(RAK_OP_RETURN)
 #define rak_return_nil_instr()       rak_instr_fmt0(RAK_OP_RETURN_NIL)
 
+/// OpCodes of the Rak language
 typedef enum
 {
   RAK_OP_NOP,
@@ -156,18 +157,30 @@ typedef enum
   RAK_OP_RETURN_NIL
 } RakOpcode;
 
+/**
+ * @brief Represents a position in the source code (line and column)
+ * 
+ * This structure is used to map compiled bytecode back to its original
+ * source location for debugging and error reporting.
+ */
 typedef struct
 {
-  uint16_t off;
-  int      ln;
-  int      col;
+  uint16_t off;  /**< Bytecode offset where this position applies */
+  int      ln;   /**< Source code line number (1-based) */
+  int      col;  /**< Source code column number (1-based) */
 } RakSourceMap;
 
+/**
+ * @brief A chunk of bytecode with associated metadata
+ * 
+ * Contains the constants, instructions, and source position mapping
+ * for a compiled segment of code.
+ */
 typedef struct
 {
-  RakSlice(RakValue)     consts;
-  RakSlice(uint32_t)     instrs;
-  RakSlice(RakSourceMap) maps;
+  RakSlice(RakValue)     consts;  /**< Array of constant values used in this chunk */
+  RakSlice(uint32_t)     instrs;  /**< Array of bytecode instructions */
+  RakSlice(RakSourceMap) maps;    /**< Mapping of instructions to source positions */
 } RakChunk;
 
 const char *rak_opcode_to_cstr(RakOpcode op);
