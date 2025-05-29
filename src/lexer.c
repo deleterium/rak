@@ -147,6 +147,13 @@ end:
   return true;
 }
 
+/** @brief Checks if a string is valid.
+  This functions checks if a string is valid and sets the `lex->tok` to the string token.
+  Note that the actual parsing is done later, at `compile_prim_expr` in compile.c.
+  
+  @returns If a string is valid, returns true and the token at `lex->tok`.
+  If not valid, returns false and sets `err` accordingly.
+  */
 static bool check_string(RakLexer *lex, RakError *err)
 {
   bool isEscape = false;
@@ -181,6 +188,14 @@ static bool check_string(RakLexer *lex, RakError *err)
   }
 }
 
+/** 
+  @brief Checks if current char is starting a string.
+  Checks state of current char `lex->curr` and, if it is a string, checks if it is a valid string.
+
+  On success, returns true and current token at `lex->tok`.
+  If not string, returns false.
+  If it is a string but with error, return false and set err accordingly.
+  */
 static inline bool match_string(RakLexer *lex, RakError *err)
 {
   if (current_char(lex) != '\"') return false;
@@ -228,11 +243,13 @@ static inline void unexpected_character_error(RakError *err, char c, int ln, int
 {
   if (c == '\0')
   {
+    // Never. '\0' will be handle as RAK_TOKEN_KIND_EOF before this happens.
     rak_error_set(err, "unexpected end of file at %d:%d", ln, col);
     return;
   }
   if (c == '\n')
   {
+    // Never. Newlines are skipped by "skip_whitespace_comments"
     rak_error_set(err, "unexpected newline at %d:%d", ln, col);
     return;
   }
@@ -240,6 +257,9 @@ static inline void unexpected_character_error(RakError *err, char c, int ln, int
   rak_error_set(err, "unexpected character '%c' at %d:%d", c, ln, col);
 }
 
+/**
+ @brief From a given tokenKind, returns a C string with that representation.
+ */
 const char *rak_token_kind_to_cstr(RakTokenKind kind)
 {
   char *cstr = NULL;
@@ -319,6 +339,12 @@ void rak_lexer_deinit(RakLexer *lex)
   rak_string_release(lex->source);
 }
 
+/**
+  @brief Checks next token and set it to `lex->tok`.
+  All checks are done in order to allow tokenization.
+
+  @returns void, but it will set next token to `lex-tol` or set `err` accordingly.
+*/
 void rak_lexer_next(RakLexer *lex, RakError *err)
 {
   skip_whitespace_comments(lex);

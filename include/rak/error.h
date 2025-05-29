@@ -16,12 +16,13 @@
 
 #define RAK_ERROR_MAX_LEN (511)
 
+/// Returns true if no error.
 #define rak_is_ok(e) ((e)->ok)
 
 typedef struct
 {
-  bool ok;
-  char cstr[RAK_ERROR_MAX_LEN + 1];
+  bool ok;                          ///< Error current status
+  char cstr[RAK_ERROR_MAX_LEN + 1]; ///< Buffer with the error message, if any
 } RakError;
 
 void rak_error_init(RakError *err);
