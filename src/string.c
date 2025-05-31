@@ -8,6 +8,11 @@
 // located in the root directory of this project.
 //
 
+/**
+  @file string.c
+  @brief Code to handle RakString type.
+  */
+
 #include "rak/string.h"
 #include "rak/error.h"
 #include <ctype.h>
@@ -31,6 +36,19 @@ void rak_string_init_with_capacity(RakString *str, int cap, RakError *err)
   rak_slice_init_with_capacity(&str->slice, cap, err);
 }
 
+/**
+  @brief From an empty RakString, initialize it and set its content from a given
+  C string.
+
+  On fail, RakString data is dealocated and the `err` is set accordingly.
+
+  Use when the calling code is owner of the RakString.
+  
+  @param *str: RakString to receive the data.
+  @param len: Length of `cstr`. -1 can be given if `cstr` is null terminated string.
+  @param *cstr: Pointer to the C String.
+  @param *err: Error structure to return an error, if any.
+  */
 void rak_string_init_from_cstr(RakString *str, int len, const char *cstr, RakError *err)
 {
   if (len < 0) len = (int) strlen(cstr);
@@ -74,6 +92,17 @@ RakString *rak_string_new_with_capacity(int cap, RakError *err)
   return NULL;
 }
 
+/**
+  @brief Creates and return a new RakString from a given C String.
+
+  This function creates a new RakString (memory allocation for structure) and copies
+  the content of C String.
+  On fail, structure is dealocated, NULL is returned and the `err` is set accordingly.
+  
+  @param len: Length of `cstr`. -1 can be given if it is null terminated string.
+  @param *cstr: Pointer to the C String.
+  @param *err: Error structure to return an error, if any.
+  */
 RakString *rak_string_new_from_cstr(int len, const char *cstr, RakError *err)
 {
   RakString *str = rak_memory_alloc(sizeof(*str), err);
@@ -200,11 +229,28 @@ int rak_string_compare(RakString *str1, RakString *str2)
   return len1 - len2;
 }
 
+/**
+  @brief Print the content of given RakString to standard output.
+ */
 void rak_string_print(RakString *str)
 {
   fwrite(rak_string_chars(str), 1, rak_string_len(str), stdout);
 }
 
+/**
+  @brief From an empty RakString, initialize it and set its content from a given
+  C string, parsing escape chars.
+
+  This function initalize the data of the incoming RakString and set it to the content
+  of C string, parsing the escape codes to the correct bytes.
+  On fail, RakString data is dealocated and the `err` is set accordingly.
+
+  Use when the calling code is owner of the RakString.
+  
+  @param len: Length of `cstr`. -1 can be given if `cstr` is null terminated string.
+  @param *cstr: Pointer to the C String.
+  @param *err: Error structure to return an error, if any.
+  */
 void rak_string_init_from_cstr_with_escapes(RakString *str, int len, const char *cstr, RakError *err)
 {
   if (len < 0) len = (int) strlen(cstr);
@@ -215,6 +261,19 @@ void rak_string_init_from_cstr_with_escapes(RakString *str, int len, const char 
   rak_string_deinit(str);
 }
 
+/**
+  @brief Creates and return a new RakString from a given C string, parsing escape chars.
+
+  This function creates a new RakString (memory allocation for structure) and parses
+  the content of C String. Escape codes will be changed to the correct bytes.
+  On fail, structure is dealocated, NULL is returned and the `err` is set accordingly.
+
+  Use when creating a new RakString that will receive retains and releases during execution.
+  
+  @param len: Length of `cstr`. -1 can be given if `cstr` is null terminated string.
+  @param *cstr: Pointer to the C String.
+  @param *err: Error structure to return an error, if any.
+  */
 RakString *rak_string_new_from_cstr_with_escapes(int len, const char *cstr, RakError *err)
 {
   RakString *str = rak_memory_alloc(sizeof(*str), err);
