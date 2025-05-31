@@ -8,6 +8,11 @@
 // located in the root directory of this project.
 //
 
+/**
+  @file error.c
+  @brief Code to handle the Error Structure.
+ */
+
 #include "rak/error.h"
 #include <stdio.h>
 
@@ -16,6 +21,10 @@ void rak_error_init(RakError *err)
   err->ok = true;
 }
 
+/** Set error to a given message in printf format.
+ *  @param fmt: format string (printf like).
+    @param args: arguments to be printed. Must be included in 'fmt' string
+ */
 void rak_error_set(RakError *err, const char *fmt, ...)
 {
   va_list args;
@@ -30,6 +39,7 @@ void rak_error_set(RakError *err, const char *fmt, ...)
  */
 void rak_error_set_with_args(RakError *err, const char *fmt, va_list args)
 {
+  // TODO Should this be internal function?
   err->ok = false;
   vsnprintf(err->cstr, RAK_ERROR_MAX_LEN, fmt, args);
   err->cstr[RAK_ERROR_MAX_LEN] = '\0';
