@@ -1,5 +1,13 @@
 #!/usr/bin/env python3
 
+"""!
+    @file run.py
+    @brief Engine to run testcases
+
+    @var executable_path
+        Global variable to store the Rak executable file passed as argument to the script.
+"""
+
 import subprocess
 import re
 import sys
@@ -17,7 +25,6 @@ except ImportError:
     )
 
 executable_path = None
-
 
 def run_one_test(test_case: dict) -> dict:
     """Runs a single test case and returns its result.
@@ -119,6 +126,18 @@ def run_test_file(test_file: str) -> list[tuple[bool, str, str]]:
 
 
 def main():
+    """Main function to run test cases.
+
+    Args:
+        test_filter (str): Filter to apply. Runs only test cases matching the filter.
+        -e path (str): Rak executable to be called. Long form is `--executable`.
+        -q: Be quiet. Only prints the summary and errors, if any. Long form is `--quiet`.
+
+    Returns:
+        Info about all tests ran, the failures and a summary. If all tests ok, exit code
+        is 0 (zero). If any error occured, exit code is 1 (one).
+    """
+
     global executable_path
 
     parser = argparse.ArgumentParser(description="Integration test runner -- rak")
