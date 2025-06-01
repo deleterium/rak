@@ -13,6 +13,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <rak.h>
+#include <wchar.h>
+#ifdef ENABLE_BENCHMARK
+#include <time.h>
+#endif
 
 static void shutdown(int sig);
 static bool has_opt(int argc, const char *argv[], const char *opt);
@@ -153,6 +157,9 @@ int main(int argc, const char *argv[])
   RakError err;
   rak_error_init(&err);
   const char *path = get_arg(argc, argv, 0);
+#ifdef ENABLE_BENCHMARK
+  clock_t start = clock();
+#endif
   RakClosure *cl = path
     ? compile_from_file(path, &err)
     : compile_from_stdin(&err);
@@ -167,6 +174,9 @@ int main(int argc, const char *argv[])
     rak_closure_free(cl);
     return EXIT_SUCCESS;
   }
+#ifdef ENABLE_BENCHMARK
+  clock_t compile = clock();
+#endif
   RakArray *globals = rak_builtin_globals(&err);
   if (!rak_is_ok(&err))
   {
@@ -192,5 +202,9 @@ int main(int argc, const char *argv[])
     return EXIT_FAILURE;
   }
   rak_fiber_deinit(&fiber);
+#ifdef ENABLE_BENCHMARK
+  clock_t end = clock();
+  fprintf(stderr, "%lu,%lu\n", (unsigned long) (compile - start), (unsigned long) (end - compile));
+#endif
   return EXIT_SUCCESS;
 }

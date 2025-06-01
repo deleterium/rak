@@ -14,6 +14,12 @@ else()
   add_compile_options(-Wall -Wextra -Wpedantic -Werror)
 endif()
 
+option(ENABLE_BENCHMARK "Enable benchmarking features" OFF)
+if(ENABLE_BENCHMARK)
+    add_compile_definitions(ENABLE_BENCHMARK)
+    message(STATUS "Benchmarking enabled")
+endif()
+
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 add_executable("${PROJECT_NAME}"
