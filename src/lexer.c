@@ -311,7 +311,7 @@ void rak_lexer_deinit(RakLexer *lex)
   rak_string_release(lex->source);
 }
 
-void rak_lexer_next(RakLexer *lex, RakError *err)
+void rak_lexer_next2(RakLexer *lex, RakError *err)
 {
   skip_whitespace_comments(lex);
   if (match_char(lex, '\0', RAK_TOKEN_KIND_EOF)) return;
@@ -363,6 +363,212 @@ void rak_lexer_next(RakLexer *lex, RakError *err)
   if (match_keyword(lex, "true", RAK_TOKEN_KIND_TRUE_KW)) return;
   if (match_keyword(lex, "while", RAK_TOKEN_KIND_WHILE_KW)) return;
   if (match_keyword(lex, "yield", RAK_TOKEN_KIND_YIELD_KW)) return;
+  if (match_ident(lex)) return;
+  unexpected_character_error(err, current_char(lex), lex->ln, lex->col);
+}
+
+void rak_lexer_next(RakLexer *lex, RakError *err)
+{
+  skip_whitespace_comments(lex);
+  switch (lex->curr[0]) {
+  case '\0':
+    lex->tok = token(lex, RAK_TOKEN_KIND_EOF, 1, lex->curr);
+    next_char(lex);
+    return;
+  case ',':
+    lex->tok = token(lex, RAK_TOKEN_KIND_COMMA, 1, lex->curr);
+    next_char(lex);
+    return;
+  case ':':
+    lex->tok = token(lex, RAK_TOKEN_KIND_COLON, 1, lex->curr);
+    next_char(lex);
+    return;
+  case ';':
+    lex->tok = token(lex, RAK_TOKEN_KIND_SEMICOLON, 1, lex->curr);
+    next_char(lex);
+    return;
+  case '(':
+    lex->tok = token(lex, RAK_TOKEN_KIND_LPAREN, 1, lex->curr);
+    next_char(lex);
+    return;
+  case ')':
+    lex->tok = token(lex, RAK_TOKEN_KIND_RPAREN, 1, lex->curr);
+    next_char(lex);
+    return;
+  case '[':
+    lex->tok = token(lex, RAK_TOKEN_KIND_LBRACKET, 1, lex->curr);
+    next_char(lex);
+    return;
+  case ']':
+    lex->tok = token(lex, RAK_TOKEN_KIND_RBRACKET, 1, lex->curr);
+    next_char(lex);
+    return;
+  case '{':
+    lex->tok = token(lex, RAK_TOKEN_KIND_LBRACE, 1, lex->curr);
+    next_char(lex);
+    return;
+  case '}':
+    lex->tok = token(lex, RAK_TOKEN_KIND_RBRACE, 1, lex->curr);
+    next_char(lex);
+    return;
+  case '|':
+    if (lex->curr[1] == '|') {
+      lex->tok = token(lex, RAK_TOKEN_KIND_PIPEPIPE, 2, lex->curr);
+      next_chars(lex, 2);
+      return;
+    }
+    break;
+  case '&':
+    if (lex->curr[1] == '&') {
+      lex->tok = token(lex, RAK_TOKEN_KIND_AMPAMP, 2, lex->curr);
+      next_chars(lex, 2);
+      return;
+    }
+    lex->tok = token(lex, RAK_TOKEN_KIND_AMP, 1, lex->curr);
+    next_char(lex);
+    return;
+  case '=':
+    if (lex->curr[1] == '=') {
+      lex->tok = token(lex,RAK_TOKEN_KIND_EQEQ, 2, lex->curr);
+      next_chars(lex, 2);
+      return;
+    }
+    lex->tok = token(lex, RAK_TOKEN_KIND_EQ, 1, lex->curr);
+    next_char(lex);
+    return;
+  case '!':
+    if (lex->curr[1] == '=') {
+      lex->tok = token(lex, RAK_TOKEN_KIND_BANGEQ, 2, lex->curr);
+      next_chars(lex, 2);
+      return;
+    }
+    lex->tok = token(lex, RAK_TOKEN_KIND_BANG, 1, lex->curr);
+    next_char(lex);
+    return;
+  case '>':
+    if (lex->curr[1] == '=') {
+      lex->tok = token(lex, RAK_TOKEN_KIND_GTEQ, 2, lex->curr);
+      next_chars(lex, 2);
+      return;
+    }
+    lex->tok = token(lex, RAK_TOKEN_KIND_GT, 1, lex->curr);
+    next_char(lex);
+    return;
+  case '<':
+    if (lex->curr[1] == '=') {
+      lex->tok = token(lex, RAK_TOKEN_KIND_LTEQ, 2, lex->curr);
+      next_chars(lex, 2);
+      return;
+    }
+    lex->tok = token(lex, RAK_TOKEN_KIND_LT, 1, lex->curr);
+    next_char(lex);
+    return;
+  case '.':
+    if (lex->curr[1] == '.') {
+      lex->tok = token(lex,RAK_TOKEN_KIND_DOTDOT, 2, lex->curr);
+      next_chars(lex, 2);
+      return;
+    }
+    lex->tok = token(lex, RAK_TOKEN_KIND_DOT, 1, lex->curr);
+    next_char(lex);
+    return;
+  case '+':
+    if (lex->curr[1] == '=') {
+      lex->tok = token(lex,RAK_TOKEN_KIND_PLUSEQ, 2, lex->curr);
+      next_chars(lex, 2);
+      return;
+    }
+    lex->tok = token(lex, RAK_TOKEN_KIND_PLUS, 1, lex->curr);
+    next_char(lex);
+    return;
+  case '-':
+    if (lex->curr[1] == '=') {
+      lex->tok = token(lex,RAK_TOKEN_KIND_MINUSEQ, 2, lex->curr);
+      next_chars(lex, 2);
+      return;
+    }
+    lex->tok = token(lex, RAK_TOKEN_KIND_MINUS, 1, lex->curr);
+    next_char(lex);
+    return;
+  case '*':
+    if (lex->curr[1] == '=') {
+      lex->tok = token(lex,RAK_TOKEN_KIND_STAREQ, 2, lex->curr);
+      next_chars(lex, 2);
+      return;
+    }
+    lex->tok = token(lex, RAK_TOKEN_KIND_STAR, 1, lex->curr);
+    next_char(lex);
+    return;
+  case '/':
+    if (lex->curr[1] == '=') {
+      lex->tok = token(lex,RAK_TOKEN_KIND_SLASHEQ, 2, lex->curr);
+      next_chars(lex, 2);
+      return;
+    }
+    lex->tok = token(lex, RAK_TOKEN_KIND_SLASH, 1, lex->curr);
+    next_char(lex);
+    return;
+  case '%':
+    if (lex->curr[1] == '=') {
+      lex->tok = token(lex,RAK_TOKEN_KIND_PERCENTEQ, 2, lex->curr);
+      next_chars(lex, 2);
+      return;
+    }
+    lex->tok = token(lex, RAK_TOKEN_KIND_PERCENT, 1, lex->curr);
+    next_char(lex);
+    return;
+  case '1':
+  case '2':
+  case '3':
+  case '4':
+  case '5':
+  case '6':
+  case '7':
+  case '8':
+  case '9':
+  case '0':
+    match_number(lex, err);
+    return;
+  case '"':
+    match_string(lex, err);
+    return;
+  case 'b':
+    if (match_keyword(lex, "break", RAK_TOKEN_KIND_BREAK_KW)) return;
+    break;
+  case 'c':
+    if (match_keyword(lex, "continue", RAK_TOKEN_KIND_CONTINUE_KW)) return;
+    break;
+  case 'e':
+    if (match_keyword(lex, "else", RAK_TOKEN_KIND_ELSE_KW)) return;
+    break;
+  case 'f':
+    if (match_keyword(lex, "false", RAK_TOKEN_KIND_FALSE_KW)) return;
+    if (match_keyword(lex, "fn", RAK_TOKEN_KIND_FN_KW)) return;
+    break;
+  case 'i':
+    if (match_keyword(lex, "if", RAK_TOKEN_KIND_IF_KW)) return;
+    if (match_keyword(lex, "inout", RAK_TOKEN_KIND_INOUT_KW)) return;
+    break;
+  case 'l':
+    if (match_keyword(lex, "let", RAK_TOKEN_KIND_LET_KW)) return;
+    if (match_keyword(lex, "loop", RAK_TOKEN_KIND_LOOP_KW)) return;
+    break;
+  case 'n':
+    if (match_keyword(lex, "nil", RAK_TOKEN_KIND_NIL_KW)) return;
+    break;
+  case 'r':
+    if (match_keyword(lex, "return", RAK_TOKEN_KIND_RETURN_KW)) return;
+    break;
+  case 't':
+    if (match_keyword(lex, "true", RAK_TOKEN_KIND_TRUE_KW)) return;
+    break;
+  case 'w':
+    if (match_keyword(lex, "while", RAK_TOKEN_KIND_WHILE_KW)) return;
+    break;
+  case 'y':
+    if (match_keyword(lex, "yield", RAK_TOKEN_KIND_YIELD_KW)) return;
+    break;
+  }
   if (match_ident(lex)) return;
   unexpected_character_error(err, current_char(lex), lex->ln, lex->col);
 }
