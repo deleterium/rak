@@ -15,6 +15,43 @@
 
 #define RAK_COMPILER_MAX_SYMBOLS (UINT8_MAX + 1)
 
+typedef enum
+{
+  START,
+  NEXT,
+  ELSE,
+  END
+} LabelType;
+
+typedef enum
+{
+  RUI_LOOP,
+  RUI_WHILE,
+  RUI_IF,
+  RUI_AND,
+  RUI_OR
+} Initiator;
+
+/**
+ * @brief Represents label
+ * 
+ * To easy debug, items are separated.
+ */
+typedef struct {
+    int index; ///< incremental
+    Initiator initiator; ///< type of label initiator
+    LabelType type; ///< Label type (start, next or end)
+} Label;
+
+/**
+ * @brief Represents label tuple (address and label details)
+ * 
+ */
+typedef struct {
+    int address;
+    Label label;
+} LabelTuple;
+
 RakClosure *rak_compile(RakString *file, RakString *source, RakError *err);
 
 #endif // RAK_COMPILER_H

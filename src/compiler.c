@@ -9,11 +9,16 @@
 //
 
 #include "rak/compiler.h"
+#include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
 #include "rak/builtin.h"
+#include "rak/chunk.h"
 #include "rak/function.h"
 #include "rak/lexer.h"
 #include "rak/string.h"
+#include "rak/slice.h"
+// #include "rak/stack.h"
 
 #define match(c, t) ((c)->lex->tok.kind == (t))
 
@@ -59,6 +64,9 @@ typedef struct Compiler
   int              scopeDepth;
   Loop            *loop;
   RakFunction     *fn;
+  // RakStack(Label)  jumpTrue;
+  // RakStack(Label)  jumpFalse;
+  RakSlice(LabelTuple *) patchList;
 } Compiler;
 
 static inline void compiler_init(Compiler *comp, Compiler *parent, RakLexer *lex,
@@ -131,6 +139,71 @@ static inline void patch_instr(RakChunk *chunk, uint16_t off, uint32_t instr);
 static inline void unexpected_token_error(RakError *err, RakToken tok);
 static inline void expected_token_error(RakError *err, RakTokenKind kind, RakToken tok);
 
+Label get_new_label(Initiator init, LabelType type) {
+  static int labelIndex=0;
+  Label ret = {
+    labelIndex++,
+    init,
+    type
+  };
+  return ret;
+}
+
+void repatch_instructions(Compiler *comp, RakChunk *chunk, int instruction, int address)
+{
+  int currInstructionOpCode = instruction & 0xFF;
+  int currInstructionDest = (instruction >> 8) & 0xFFFF;;
+  for (int i = 0; i < comp->patchList.len; ++i)
+  {
+    int patchedInstruction = chunk->instrs.data[comp->patchList.data[i]->address];
+    int patchedInstrOpCode = patchedInstruction & 0xFF;
+    int patchedInstrDest = (patchedInstruction >> 8) & 0xFFFF;
+    if (patchedInstrDest == address) {
+      if (patchedInstrOpCode == currInstructionOpCode) {
+        //repatch to new destination
+        chunk->instrs.data[comp->patchList.data[i]->address] = patchedInstrOpCode | (currInstructionDest << 8);
+      } else {
+        //repatch to next instruction
+        chunk->instrs.data[comp->patchList.data[i]->address] = patchedInstrOpCode | ((address + 1) << 8);
+      }
+    }
+  }
+
+}
+/**
+  @brief Loop all pending items searching for given label and patch those instructions to point
+    to given address.
+
+  If repatch is enabled, only use with "jump_if_true" and "jump_if_false" instructions!
+  */
+void patch_instructions(Compiler *comp, RakChunk *chunk, Label label, int address) {
+  for (int i = 0; i < comp->patchList.len; ++i)
+  {
+    Label patchLabel = comp->patchList.data[i]->label;
+    int  instructionIndex = comp->patchList.data[i]->address;
+    if (patchLabel.index == label.index) {
+      int instruction = chunk->instrs.data[instructionIndex];
+      instruction = (instruction & 0xFF) | ((uint16_t) address << 8);
+      chunk->instrs.data[instructionIndex] = instruction;
+      repatch_instructions(comp, chunk, instruction, instructionIndex);
+    }
+  }
+}
+
+/**
+  @brief Insert a new jump instruction that is needed to be patched later.
+  */
+void add_pending_jump(Compiler *comp, RakChunk *chunk, Label label, int address, int instr, RakError *err) {
+  LabelTuple *newTuple = malloc(sizeof(LabelTuple));
+  // if null error
+  newTuple->label = label;
+  newTuple->address = address;
+  rak_slice_ensure_append(&comp->patchList, newTuple, err);
+  if (!rak_is_ok(err)) return;
+  emit_instr(comp, chunk, instr, err);
+}
+
+
 static inline void compiler_init(Compiler *comp, Compiler *parent, RakLexer *lex,
   RakString *fnName, int arity, RakError *err)
 {
@@ -143,11 +216,17 @@ static inline void compiler_init(Compiler *comp, Compiler *parent, RakLexer *lex
   if (!rak_is_ok(err)) return;
   comp->fn = fn;
   rak_object_retain(&fn->callable.obj);
+  rak_slice_init(&comp->patchList, err);
+  if (!rak_is_ok(err)) {
+    // todo something
+    return;
+  }
 }
 
 static inline void compiler_deinit(Compiler *comp)
 {
   rak_function_release(comp->fn);
+  // release patchList
 }
 
 static inline void compile_chunk(Compiler *comp, RakChunk *chunk, RakError *err)
@@ -678,9 +757,12 @@ static inline void compile_if_stmt(Compiler *comp, RakChunk *chunk, uint16_t *of
     compile_let_decl(comp, chunk, err);
     if (!rak_is_ok(err)) return;
   }
+  Label ifElse = get_new_label(RUI_IF, ELSE);
+  // rak_stack_push(&comp->jumpTrue, ifStart);
+  // rak_stack_push(&comp->jumpFalse, ifElse);
   compile_expr(comp, chunk, err);
   if (!rak_is_ok(err)) return;
-  uint16_t jump1 = emit_instr(comp, chunk, rak_nop_instr(), err);
+  add_pending_jump(comp, chunk, ifElse, chunk->instrs.len, rak_jump_if_false_instr(-1), err);
   if (!rak_is_ok(err)) return;
   emit_instr(comp, chunk, rak_pop_instr(), err);
   if (!rak_is_ok(err)) return;
@@ -691,11 +773,12 @@ static inline void compile_if_stmt(Compiler *comp, RakChunk *chunk, uint16_t *of
   }
   compile_block(comp, chunk, err);
   if (!rak_is_ok(err)) return;
-  uint16_t jump2 = emit_instr(comp, chunk, rak_nop_instr(), err);
+  uint16_t jump2 = emit_instr(comp, chunk, rak_jump_instr(-1), err);
   if (!rak_is_ok(err)) return;
-  uint32_t instr = rak_jump_if_false_instr((uint16_t) chunk->instrs.len);
-  patch_instr(chunk, jump1, instr);
+  patch_instructions(comp, chunk, ifElse, chunk->instrs.len);
   if (!rak_is_ok(err)) return;
+  // rak_stack_pop(&comp->jumpTrue);
+  // rak_stack_pop(&comp->jumpFalse);
   emit_instr(comp, chunk, rak_pop_instr(), err);
   uint16_t _off;
   compile_if_stmt_cont(comp, chunk, &_off, err);
@@ -881,7 +964,10 @@ static inline void compile_expr_cont(Compiler *comp, RakChunk *chunk, uint16_t *
     return;
   }
   next(comp, err);
-  uint16_t jump = emit_instr(comp, chunk, rak_nop_instr(), err);
+  // Label previousFalse = rak_stack_get(&comp->jumpFalse, 0);
+  // Label previousTrue = rak_stack_get(&comp->jumpTrue, 0);
+  Label orEnd = get_new_label(RUI_OR, END);
+  add_pending_jump(comp, chunk, orEnd, chunk->instrs.len, rak_jump_if_true_instr(-1), err);
   if (!rak_is_ok(err)) return;
   emit_instr(comp, chunk, rak_pop_instr(), err);
   if (!rak_is_ok(err)) return;
@@ -890,7 +976,7 @@ static inline void compile_expr_cont(Compiler *comp, RakChunk *chunk, uint16_t *
   uint16_t _off;
   compile_expr_cont(comp, chunk, &_off, err);
   if (!rak_is_ok(err)) return;
-  patch_instr(chunk, jump, rak_jump_if_true_instr(_off));
+  patch_instructions(comp, chunk, orEnd, chunk->instrs.len);
   if (off) *off = _off;
 }
 
@@ -909,7 +995,8 @@ static inline void compile_and_expr_cont(Compiler *comp, RakChunk *chunk, uint16
     return;
   }
   next(comp, err);
-  uint16_t jump = emit_instr(comp, chunk, rak_nop_instr(), err);
+  Label andEnd = get_new_label(RUI_AND, NEXT);
+  add_pending_jump(comp, chunk, andEnd, chunk->instrs.len, rak_jump_if_false_instr(-1), err);
   if (!rak_is_ok(err)) return;
   emit_instr(comp, chunk, rak_pop_instr(), err);
   if (!rak_is_ok(err)) return;
@@ -918,7 +1005,7 @@ static inline void compile_and_expr_cont(Compiler *comp, RakChunk *chunk, uint16
   uint16_t _off;
   compile_and_expr_cont(comp, chunk, &_off, err);
   if (!rak_is_ok(err)) return;
-  patch_instr(chunk, jump, rak_jump_if_false_instr(_off));
+  patch_instructions(comp, chunk, andEnd, chunk->instrs.len);
   if (off) *off = _off;
 }
 
