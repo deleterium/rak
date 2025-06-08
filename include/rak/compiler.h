@@ -25,6 +25,7 @@ typedef enum
 
 typedef enum
 {
+  RUI_EMPTY,
   RUI_LOOP,
   RUI_WHILE,
   RUI_IF,
