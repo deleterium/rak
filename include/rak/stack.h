@@ -41,15 +41,15 @@
 
 #define rak_stack_get(stk, i) ((stk)->top[- (i)])
 
-#define rak_stack_set(stk, i, d) \
+#define rak_stack_set(stk, i, ...) \
   do { \
-    (stk)->top[- (i)] = (d); \
+    (stk)->top[- (i)] = (__VA_ARGS__); \
   } while (0)
 
-#define rak_stack_push(stk, d) \
+#define rak_stack_push(stk, ...) \
   do { \
     ++(stk)->top; \
-    *(stk)->top = (d); \
+    *(stk)->top = (__VA_ARGS__); \
   } while (0)
 
 #define rak_stack_pop(stk) \
