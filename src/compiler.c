@@ -10,7 +10,6 @@
 
 #include "rak/compiler.h"
 #include <stdint.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "rak/builtin.h"
@@ -61,7 +60,6 @@ typedef RakStaticSlice(Symbol, RAK_COMPILER_MAX_SYMBOLS) SymbolSlice;
  */
 typedef int Label;
 
-#define POISON_STACK
 #define PATCH_LIST_SIZE 80
 
 /**
@@ -197,10 +195,6 @@ void repatch_instructions(Compiler *comp, RakChunk *chunk, int instruction, int 
 void patch_instructions(Compiler *comp, RakChunk *chunk, Label label, int address) {
   for (LabelTuple *item = comp->patchList.base; item <= comp->patchList.top; ++item)
   {
-#ifdef POISON_STACK
-    if (item->address == -2) fprintf(stderr, "Using poisoned stack 1!");
-    if (item->label == -1) fprintf(stderr, "Using poisoned stack 2!");
-#endif
     if (item->label != label) continue;
     int instruction = chunk->instrs.data[item->address];
     instruction = (instruction & 0xFF) | ((uint16_t) address << 8);
@@ -792,9 +786,6 @@ static inline void compile_if_stmt(Compiler *comp, RakChunk *chunk, uint16_t *of
   if (!rak_is_ok(err)) return;
   patch_instructions(comp, chunk, ifElse, chunk->instrs.len);
   while (&rak_stack_get(&comp->patchList, 0) != patchStartAddress) {
-#ifdef POISON_STACK
-    rak_stack_set(&comp->patchList, 0, (LabelTuple) {-2, -1});
-#endif
     rak_stack_pop(&comp->patchList);
   }
   if (!rak_is_ok(err)) return;
@@ -881,9 +872,6 @@ static inline void compile_while_stmt(Compiler *comp, RakChunk *chunk, RakError 
   if (!rak_is_ok(err)) return;
   patch_instructions(comp, chunk, whileEnd, chunk->instrs.len);
   while (&rak_stack_get(&comp->patchList, 0) != patchStartAddress) {
-#ifdef POISON_STACK
-    rak_stack_set(&comp->patchList, 0, (LabelTuple) {-2, -1});
-#endif
     rak_stack_pop(&comp->patchList);
   }
   emit_instr(comp, chunk, rak_pop_instr(), err);
@@ -1569,9 +1557,6 @@ static inline void compile_if_expr(Compiler *comp, RakChunk *chunk, uint16_t *of
   if (!rak_is_ok(err)) return;
   patch_instructions(comp, chunk, ifElse, chunk->instrs.len);
   while (&rak_stack_get(&comp->patchList, 0) != patchStartAddress) {
-#ifdef POISON_STACK
-    rak_stack_set(&comp->patchList, 0, (LabelTuple) {-2, -1});
-#endif
     rak_stack_pop(&comp->patchList);
   }
   uint16_t _off;
