@@ -798,6 +798,7 @@ static inline void compile_if_stmt(Compiler *comp, RakChunk *chunk, uint16_t *of
   }
   if (!rak_is_ok(err)) return;
   emit_instr(comp, chunk, rak_pop_instr(), err);
+  if (!rak_is_ok(err)) return;
   uint16_t _off;
   compile_if_stmt_cont(comp, chunk, &_off, err);
   if (!rak_is_ok(err)) return;
@@ -988,9 +989,7 @@ static inline void compile_expr_cont(Compiler *comp, RakChunk *chunk, uint16_t *
   }
   next(comp, err);
   Label orEnd = get_new_label();
-  add_pending_jump(comp, chunk, orEnd, chunk->instrs.len, rak_jump_if_true_instr(-1), err);
-  if (!rak_is_ok(err)) return;
-  emit_instr(comp, chunk, rak_pop_instr(), err);
+  add_pending_jump(comp, chunk, orEnd, chunk->instrs.len, rak_jump_if_true_or_pop_instr(-1), err);
   if (!rak_is_ok(err)) return;
   compile_and_expr(comp, chunk, err);
   if (!rak_is_ok(err)) return;
@@ -1017,9 +1016,7 @@ static inline void compile_and_expr_cont(Compiler *comp, RakChunk *chunk, uint16
   }
   next(comp, err);
   Label andEnd = get_new_label();
-  add_pending_jump(comp, chunk, andEnd, chunk->instrs.len, rak_jump_if_false_instr(-1), err);
-  if (!rak_is_ok(err)) return;
-  emit_instr(comp, chunk, rak_pop_instr(), err);
+  add_pending_jump(comp, chunk, andEnd, chunk->instrs.len, rak_jump_if_false_or_pop_instr(-1), err);
   if (!rak_is_ok(err)) return;
   compile_eq_expr(comp, chunk, err);
   if (!rak_is_ok(err)) return;
