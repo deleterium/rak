@@ -877,6 +877,7 @@ static inline void rak_vm_jump_if_false(RakFiber *fiber, RakClosure *cl, uint32_
   RakChunk *chunk = &((RakFunction *) cl->callable)->chunk;
   RakCallFrame *frame = &rak_stack_get(&fiber->cstk, 0);
   frame->state = rak_is_falsy(val) ? &rak_slice_get(&chunk->instrs, off) : ip + 1;
+  rak_fiber_pop(fiber);
 }
 
 static inline void rak_vm_jump_if_true(RakFiber *fiber, RakClosure *cl, uint32_t *ip, RakValue *slots, RakError *err)
@@ -888,6 +889,7 @@ static inline void rak_vm_jump_if_true(RakFiber *fiber, RakClosure *cl, uint32_t
   RakChunk *chunk = &((RakFunction *) cl->callable)->chunk;
   RakCallFrame *frame = &rak_stack_get(&fiber->cstk, 0);
   frame->state = rak_is_falsy(val) ? ip + 1 : &rak_slice_get(&chunk->instrs, off);
+  rak_fiber_pop(fiber);
 }
 
 static inline void rak_vm_jump_if_false_or_pop(RakFiber *fiber, RakClosure *cl, uint32_t *ip, RakValue *slots, RakError *err)
@@ -903,8 +905,8 @@ static inline void rak_vm_jump_if_false_or_pop(RakFiber *fiber, RakClosure *cl, 
     frame->state = &rak_slice_get(&chunk->instrs, off);
     return;
   }
-  rak_fiber_pop(fiber);
   frame->state = ip + 1;
+  rak_fiber_pop(fiber);
 }
 
 static inline void rak_vm_jump_if_true_or_pop(RakFiber *fiber, RakClosure *cl, uint32_t *ip, RakValue *slots, RakError *err)
@@ -917,8 +919,8 @@ static inline void rak_vm_jump_if_true_or_pop(RakFiber *fiber, RakClosure *cl, u
   RakCallFrame *frame = &rak_stack_get(&fiber->cstk, 0);
   if (rak_is_falsy(val))
   {
-    rak_fiber_pop(fiber);
     frame->state = ip + 1;
+    rak_fiber_pop(fiber);
     return;
   }
   frame->state = &rak_slice_get(&chunk->instrs, off);

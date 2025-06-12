@@ -780,8 +780,6 @@ static inline void compile_if_stmt(Compiler *comp, RakChunk *chunk, uint16_t *of
   if (!rak_is_ok(err)) return;
   add_pending_jump(comp, chunk, ifElse, chunk->instrs.len, rak_jump_if_false_instr(-1), err);
   if (!rak_is_ok(err)) return;
-  emit_instr(comp, chunk, rak_pop_instr(), err);
-  if (!rak_is_ok(err)) return;
   if (!match(comp, RAK_TOKEN_KIND_LBRACE))
   {
     expected_token_error(err, RAK_TOKEN_KIND_LBRACE, comp->lex->tok);
@@ -796,8 +794,6 @@ static inline void compile_if_stmt(Compiler *comp, RakChunk *chunk, uint16_t *of
   {
     rak_stack_pop(&comp->patchList);
   }
-  if (!rak_is_ok(err)) return;
-  emit_instr(comp, chunk, rak_pop_instr(), err);
   if (!rak_is_ok(err)) return;
   uint16_t _off;
   compile_if_stmt_cont(comp, chunk, &_off, err);
@@ -866,8 +862,6 @@ static inline void compile_while_stmt(Compiler *comp, RakChunk *chunk, RakError 
   if (!rak_is_ok(err)) return;
   add_pending_jump(comp, chunk, whileEnd, chunk->instrs.len, rak_jump_if_false_instr(-1), err);
   if (!rak_is_ok(err)) return;
-  emit_instr(comp, chunk, rak_pop_instr(), err);
-  if (!rak_is_ok(err)) return;
   if (!match(comp, RAK_TOKEN_KIND_LBRACE))
   {
     expected_token_error(err, RAK_TOKEN_KIND_LBRACE, comp->lex->tok);
@@ -884,8 +878,6 @@ static inline void compile_while_stmt(Compiler *comp, RakChunk *chunk, RakError 
   {
     rak_stack_pop(&comp->patchList);
   }
-  emit_instr(comp, chunk, rak_pop_instr(), err);
-  if (!rak_is_ok(err)) return;
   end_loop(comp, chunk);
   end_scope(comp, chunk, err);
 }
@@ -1553,8 +1545,6 @@ static inline void compile_if_expr(Compiler *comp, RakChunk *chunk, uint16_t *of
   if (!rak_is_ok(err)) return;
   add_pending_jump(comp, chunk, ifElse, chunk->instrs.len, rak_jump_if_false_instr(-1), err);
   if (!rak_is_ok(err)) return;
-  emit_instr(comp, chunk, rak_pop_instr(), err);
-  if (!rak_is_ok(err)) return;
   compile_block_expr(comp, chunk, err);
   if (!rak_is_ok(err)) return;
   uint16_t jump2 = emit_instr(comp, chunk, rak_nop_instr(), err);
@@ -1581,8 +1571,6 @@ static inline void compile_block_expr(Compiler *comp, RakChunk *chunk, RakError 
 
 static inline void compile_if_expr_cont(Compiler *comp, RakChunk *chunk, uint16_t *off, RakError *err)
 {
-  emit_instr(comp, chunk, rak_pop_instr(), err);
-  if (!rak_is_ok(err)) return;
   if (!match(comp, RAK_TOKEN_KIND_ELSE_KW))
   {
     emit_instr(comp, chunk, rak_push_nil_instr(), err);
