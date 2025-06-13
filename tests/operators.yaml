@@ -90,3 +90,223 @@
     true
     -10
     10
+
+- test: OR simple
+  source:
+    fn update(inout val) {
+      let n=0;
+      while n < len(val) {
+        if (val[n] == false) { &val[n] = true; return false; }
+        &val[n] = false; &n += 1; }
+      return true; }
+
+    fn test(a) {
+      return (a[0] || a[1]); }
+
+    println("a[0] || a[1]");
+    let a = [false, false];
+    loop {
+      if test(a) { println(a); }
+      if (update(&a)) { break; } }
+  out: |
+    a[0] || a[1]
+    [true, false]
+    [false, true]
+    [true, true]
+
+- test: OR multiple
+  source:
+    fn update(inout val) {
+      let n=0;
+      while n < len(val) {
+        if (val[n] == false) { &val[n] = true; return false; }
+        &val[n] = false; &n += 1; }
+      return true; }
+
+    fn test(a) {
+      return (a[0] || a[1] || a[2]); }
+
+    println("a[0] || a[1] || a[2]");
+    let a = [false, false, false];
+    loop {
+      if test(a) { println(a); }
+      if (update(&a)) { break; } }
+  out: |
+    a[0] || a[1] || a[2]
+    [true, false, false]
+    [false, true, false]
+    [true, true, false]
+    [false, false, true]
+    [true, false, true]
+    [false, true, true]
+    [true, true, true]
+
+- test: AND simple
+  source:
+    fn update(inout val) {
+      let n=0;
+      while n < len(val) {
+        if (val[n] == false) { &val[n] = true; return false; }
+        &val[n] = false; &n += 1; }
+      return true; }
+
+    fn test(a) {
+      return (a[0] && a[1]); }
+
+    println("a[0] && a[1]");
+    let a = [false, false];
+    loop {
+      if test(a) { println(a); }
+      if (update(&a)) { break; } }
+  out: |
+    a[0] && a[1]
+    [true, true]
+
+- test: AND multiple
+  source:
+    fn update(inout val) {
+      let n=0;
+      while n < len(val) {
+        if (val[n] == false) { &val[n] = true; return false; }
+        &val[n] = false; &n += 1; }
+      return true; }
+
+    fn test(a) {
+      return (a[0] && a[1] && a[2]); }
+
+    println("a[0] && a[1] && a[2]");
+    let a = [false, false, false];
+    loop {
+      if test(a) { println(a); }
+      if (update(&a)) { break; } }
+  out: |
+    a[0] && a[1] && a[2]
+    [true, true, true]
+
+- test: mix OR and AND
+  source:
+    fn update(inout val) {
+      let n=0;
+      while n < len(val) {
+        if (val[n] == false) { &val[n] = true; return false; }
+        &val[n] = false; &n += 1; }
+      return true; }
+
+    fn test(a) {
+      return ((a[0] || a[1]) && (a[2] || a[3])); }
+
+    println("(a[0] || a[1]) && (a[2] || a[3])");
+    let a = [false, false, false, false];
+    loop {
+      if test(a) { println(a); }
+      if (update(&a)) { break; } }
+  out: |
+    (a[0] || a[1]) && (a[2] || a[3])
+    [true, false, true, false]
+    [false, true, true, false]
+    [true, true, true, false]
+    [true, false, false, true]
+    [false, true, false, true]
+    [true, true, false, true]
+    [true, false, true, true]
+    [false, true, true, true]
+    [true, true, true, true]
+
+- test: mix OR and AND (2)
+  source:
+    fn update(inout val) {
+      let n=0;
+      while n < len(val) {
+        if (val[n] == false) { &val[n] = true; return false; }
+        &val[n] = false; &n += 1; }
+      return true; }
+
+    fn test(a) {
+      return ((a[0] && a[1]) || (a[2] && a[3])); }
+
+    println("(a[0] && a[1]) || (a[2] && a[3])");
+    let a = [false, false, false, false];
+    loop {
+      if test(a) { println(a); }
+      if (update(&a)) { break; } }
+  out: |
+    (a[0] && a[1]) || (a[2] && a[3])
+    [true, true, false, false]
+    [true, true, true, false]
+    [true, true, false, true]
+    [false, false, true, true]
+    [true, false, true, true]
+    [false, true, true, true]
+    [true, true, true, true]
+
+- test: mix OR and AND and NOT
+  source:
+    fn update(inout val) {
+      let n=0;
+      while n < len(val) {
+        if (val[n] == false) { &val[n] = true; return false; }
+        &val[n] = false; &n += 1; }
+      return true; }
+
+    fn test(a) {
+      return ((a[0] && (a[1] || a[2])) && (!a[3] || a[4])); }
+
+    println("(a[0] && (a[1] || a[2])) && (!a[3] || a[4])");
+    let a = [false, false, false, false, false];
+    loop {
+      if test(a) { println(a); }
+      if (update(&a)) { break; } }
+  out: |
+    (a[0] && (a[1] || a[2])) && (!a[3] || a[4])
+    [true, true, false, false, false]
+    [true, false, true, false, false]
+    [true, true, true, false, false]
+    [true, true, false, false, true]
+    [true, false, true, false, true]
+    [true, true, true, false, true]
+    [true, true, false, true, true]
+    [true, false, true, true, true]
+    [true, true, true, true, true]
+
+- test: mix OR and AND and NOT (inverse)
+  source:
+    fn update(inout val) {
+      let n=0;
+      while n < len(val) {
+        if (val[n] == false) { &val[n] = true; return false; }
+        &val[n] = false; &n += 1; }
+      return true; }
+
+    fn test(a) {
+      return (a[0] || (a[1] && a[2])) || (a[3] && !a[4]); }
+
+    println("(a[0] || (a[1] && a[2])) || (a[3] && !a[4])");
+    let a = [false, false, false, false, false];
+    loop {
+      if test(a) { println(a); }
+      if (update(&a)) { break; } }
+  out: |
+    (a[0] || (a[1] && a[2])) || (a[3] && !a[4])
+    [true, false, false, false, false]
+    [true, true, false, false, false]
+    [true, false, true, false, false]
+    [false, true, true, false, false]
+    [true, true, true, false, false]
+    [false, false, false, true, false]
+    [true, false, false, true, false]
+    [false, true, false, true, false]
+    [true, true, false, true, false]
+    [false, false, true, true, false]
+    [true, false, true, true, false]
+    [false, true, true, true, false]
+    [true, true, true, true, false]
+    [true, false, false, false, true]
+    [true, true, false, false, true]
+    [true, false, true, false, true]
+    [false, true, true, false, true]
+    [true, true, true, false, true]
+    [true, false, false, true, true]
+    [true, true, false, true, true]
+    [true, false, true, true, true]
+    [false, true, true, true, true]
+    [true, true, true, true, true]
