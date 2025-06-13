@@ -9,30 +9,25 @@
   args: "-c"
   out: |+
     ; main
-    ; 0 parameter(s), 2 constant(s), 23 instruction(s), 0 function(s)
+    ; 0 parameter(s), 2 constant(s), 18 instruction(s), 0 function(s)
       0             PUSH_TRUE      
-      1             JUMP_IF_FALSE   5    
-      2             POP            
-      3             PUSH_FALSE     
-      4             JUMP_IF_TRUE    11   
-      5             POP            
-      6             PUSH_TRUE      
-      7             JUMP_IF_FALSE   17   
-      8             POP            
-      9             PUSH_FALSE     
-      10            JUMP_IF_FALSE   17   
-      11            POP            
-      12     2      LOAD_GLOBAL     41   
-      13            LOAD_CONST      0    
-      14            CALL            1    
-      15     3      POP            
-      16            JUMP            22   
-      17            POP            
-      18     4      LOAD_GLOBAL     41   
-      19            LOAD_CONST      1    
-      20            CALL            1    
-      21     5      POP            
-      22     6      RETURN_NIL     
+      1             JUMP_IF_FALSE   4    
+      2             PUSH_FALSE     
+      3             JUMP_IF_TRUE    8    
+      4             PUSH_TRUE      
+      5             JUMP_IF_FALSE   13   
+      6             PUSH_FALSE     
+      7             JUMP_IF_FALSE   13   
+      8      2      LOAD_GLOBAL     41   
+      9             LOAD_CONST      0    
+      10            CALL            1    
+      11     3      POP            
+      12            JUMP            17   
+      13     4      LOAD_GLOBAL     41   
+      14            LOAD_CONST      1    
+      15            CALL            1    
+      16     5      POP            
+      17     6      RETURN_NIL     
     
 - test: jump optimization in while loop
   source: |
@@ -42,26 +37,21 @@
   args: "-c"
   out: |+
     ; main
-    ; 0 parameter(s), 1 constant(s), 19 instruction(s), 0 function(s)
+    ; 0 parameter(s), 1 constant(s), 14 instruction(s), 0 function(s)
       0             PUSH_TRUE      
-      1             JUMP_IF_FALSE   5    
-      2             POP            
-      3             PUSH_FALSE     
-      4             JUMP_IF_TRUE    11   
-      5             POP            
-      6             PUSH_TRUE      
-      7             JUMP_IF_FALSE   17   
-      8             POP            
-      9             PUSH_FALSE     
-      10            JUMP_IF_FALSE   17   
-      11            POP            
-      12     2      LOAD_GLOBAL     41   
-      13            LOAD_CONST      0    
-      14            CALL            1    
-      15     3      POP            
-      16     4      JUMP            0    
-      17            POP            
-      18            RETURN_NIL     
+      1             JUMP_IF_FALSE   4    
+      2             PUSH_FALSE     
+      3             JUMP_IF_TRUE    8    
+      4             PUSH_TRUE      
+      5             JUMP_IF_FALSE   13   
+      6             PUSH_FALSE     
+      7             JUMP_IF_FALSE   13   
+      8      2      LOAD_GLOBAL     41   
+      9             LOAD_CONST      0    
+      10            CALL            1    
+      11     3      POP            
+      12     4      JUMP            0    
+      13            RETURN_NIL     
     
 - test: jump optimization in if assignment
   source: |
@@ -69,24 +59,19 @@
   args: "-c"
   out: |+
     ; main
-    ; 0 parameter(s), 2 constant(s), 17 instruction(s), 0 function(s)
+    ; 0 parameter(s), 2 constant(s), 12 instruction(s), 0 function(s)
       0             PUSH_TRUE      
-      1             JUMP_IF_FALSE   5    
-      2             POP            
-      3             PUSH_FALSE     
-      4             JUMP_IF_TRUE    11   
-      5             POP            
-      6             PUSH_TRUE      
-      7             JUMP_IF_FALSE   14   
-      8             POP            
-      9             PUSH_FALSE     
-      10            JUMP_IF_FALSE   14   
-      11            POP            
-      12            LOAD_CONST      0    
-      13            JUMP            16   
-      14            POP            
-      15            LOAD_CONST      1    
-      16     2      RETURN_NIL     
+      1             JUMP_IF_FALSE   4    
+      2             PUSH_FALSE     
+      3             JUMP_IF_TRUE    8    
+      4             PUSH_TRUE      
+      5             JUMP_IF_FALSE   10   
+      6             PUSH_FALSE     
+      7             JUMP_IF_FALSE   10   
+      8             LOAD_CONST      0    
+      9             JUMP            11   
+      10            LOAD_CONST      1    
+      11     2      RETURN_NIL     
     
 - test: jump optimization (nested)
   source: |
@@ -105,77 +90,57 @@
   args: "-c"
   out: |+
     ; main
-    ; 0 parameter(s), 4 constant(s), 72 instruction(s), 0 function(s)
+    ; 0 parameter(s), 4 constant(s), 52 instruction(s), 0 function(s)
       0             PUSH_TRUE      
-      1             JUMP_IF_TRUE    5    
-      2             POP            
-      3             PUSH_FALSE     
-      4             JUMP_IF_FALSE   70   
-      5             POP            
-      6             PUSH_TRUE      
-      7             JUMP_IF_TRUE    11   
-      8             POP            
-      9             PUSH_FALSE     
-      10            JUMP_IF_FALSE   70   
-      11            POP            
-      12     2      PUSH_TRUE      
-      13            JUMP_IF_FALSE   17   
-      14            POP            
-      15            PUSH_FALSE     
-      16            JUMP_IF_TRUE    23   
-      17            POP            
-      18            PUSH_TRUE      
-      19            JUMP_IF_FALSE   64   
-      20            POP            
-      21            PUSH_FALSE     
-      22            JUMP_IF_FALSE   64   
-      23            POP            
-      24     3      PUSH_TRUE      
-      25            JUMP_IF_FALSE   29   
-      26            POP            
-      27            PUSH_FALSE     
-      28            JUMP_IF_TRUE    35   
-      29            POP            
-      30            PUSH_TRUE      
-      31            JUMP_IF_FALSE   58   
-      32            POP            
-      33            PUSH_FALSE     
-      34            JUMP_IF_FALSE   58   
-      35            POP            
-      36     4      PUSH_TRUE      
-      37            JUMP_IF_TRUE    41   
-      38            POP            
-      39            PUSH_FALSE     
-      40            JUMP_IF_FALSE   50   
-      41            POP            
-      42            PUSH_TRUE      
-      43            JUMP_IF_TRUE    47   
-      44            POP            
-      45            PUSH_FALSE     
-      46            JUMP_IF_FALSE   50   
-      47            POP            
-      48            LOAD_CONST      0    
-      49            JUMP            52   
-      50            POP            
-      51            LOAD_CONST      1    
-      52     5      LOAD_GLOBAL     41   
-      53            LOAD_LOCAL      1    
-      54            CALL            1    
-      55     6      POP            
-      56            POP            
-      57            JUMP            63   
-      58            POP            
-      59     7      LOAD_GLOBAL     41   
-      60            LOAD_CONST      2    
-      61            CALL            1    
-      62     8      POP            
-      63     9      JUMP            69   
-      64            POP            
-      65     10     LOAD_GLOBAL     41   
-      66            LOAD_CONST      3    
-      67            CALL            1    
-      68     11     POP            
-      69     13     JUMP            0    
-      70            POP            
-      71            RETURN_NIL     
+      1             JUMP_IF_TRUE    4    
+      2             PUSH_FALSE     
+      3             JUMP_IF_FALSE   51   
+      4             PUSH_TRUE      
+      5             JUMP_IF_TRUE    8    
+      6             PUSH_FALSE     
+      7             JUMP_IF_FALSE   51   
+      8      2      PUSH_TRUE      
+      9             JUMP_IF_FALSE   12   
+      10            PUSH_FALSE     
+      11            JUMP_IF_TRUE    16   
+      12            PUSH_TRUE      
+      13            JUMP_IF_FALSE   46   
+      14            PUSH_FALSE     
+      15            JUMP_IF_FALSE   46   
+      16     3      PUSH_TRUE      
+      17            JUMP_IF_FALSE   20   
+      18            PUSH_FALSE     
+      19            JUMP_IF_TRUE    24   
+      20            PUSH_TRUE      
+      21            JUMP_IF_FALSE   41   
+      22            PUSH_FALSE     
+      23            JUMP_IF_FALSE   41   
+      24     4      PUSH_TRUE      
+      25            JUMP_IF_TRUE    28   
+      26            PUSH_FALSE     
+      27            JUMP_IF_FALSE   34   
+      28            PUSH_TRUE      
+      29            JUMP_IF_TRUE    32   
+      30            PUSH_FALSE     
+      31            JUMP_IF_FALSE   34   
+      32            LOAD_CONST      0    
+      33            JUMP            35   
+      34            LOAD_CONST      1    
+      35     5      LOAD_GLOBAL     41   
+      36            LOAD_LOCAL      1    
+      37            CALL            1    
+      38     6      POP            
+      39            POP            
+      40            JUMP            45   
+      41     7      LOAD_GLOBAL     41   
+      42            LOAD_CONST      2    
+      43            CALL            1    
+      44     8      POP            
+      45     9      JUMP            50   
+      46     10     LOAD_GLOBAL     41   
+      47            LOAD_CONST      3    
+      48            CALL            1    
+      49     11     POP            
+      50     13     JUMP            0    
+      51            RETURN_NIL     
     
