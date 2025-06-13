@@ -8,8 +8,13 @@
 // located in the root directory of this project.
 //
 
+// #define DEBUG
+
 #include "rak/compiler.h"
 #include <stdint.h>
+#ifdef DEBUG
+#include <stdio.h>
+#endif
 #include <stdlib.h>
 #include <string.h>
 #include "rak/builtin.h"
@@ -68,7 +73,7 @@ typedef int Label;
  */
 typedef struct
 {
-    int address;
+    uint16_t address;
     Label label;
 } LabelTuple;
 
@@ -167,28 +172,41 @@ Label get_new_label(void)
 
   This optimizes a jump to jump -> jump directly to next instruction.
   */
-void repatch_jumps(Compiler *comp, RakChunk *chunk, int instruction, int address)
+void repatch_jumps(Compiler *comp, RakChunk *chunk, uint32_t instruction, uint16_t address)
 {
-  int currInstructionOpCode = instruction & 0xFF;
-  int currInstructionDest = (instruction >> 8) & 0xFFFF;;
+  RakOpcode currInstructionOpCode = instruction & 0xFF;
+  uint16_t currInstructionDest = (instruction >> 8) & 0xFFFF;;
   for (LabelTuple *item = comp->patchList.base; item <= comp->patchList.top; ++item)
   {
-    int patchedInstruction = chunk->instrs.data[item->address];
-    int patchedInstrOpCode = patchedInstruction & 0xFF;
-    int patchedInstrDest = (patchedInstruction >> 8) & 0xFFFF;
-    if (patchedInstrDest == address)
+    uint32_t patchedInstruction = chunk->instrs.data[item->address];
+    RakOpcode patchedInstrOpCode = patchedInstruction & 0xFF;
+    uint16_t patchedInstrDest = (patchedInstruction >> 8) & 0xFFFF;
+    if (patchedInstrDest != address) continue;
+    RakOpcode newInstruction;
+    uint16_t newAddress;
+    if (patchedInstrOpCode == RAK_OP_JUMP_IF_FALSE || patchedInstrOpCode == RAK_OP_JUMP_IF_FALSE_OR_POP)
     {
-      if (patchedInstrOpCode == currInstructionOpCode)
-      {
-        //repatch to new destination
-        chunk->instrs.data[item->address] = patchedInstrOpCode | (currInstructionDest << 8);
-      }
-      else
-      {
-        //repatch to next instruction
-        chunk->instrs.data[item->address] = patchedInstrOpCode | ((address + 1) << 8);
-      }
+      newInstruction = RAK_OP_JUMP_IF_FALSE;
+      if (currInstructionOpCode == RAK_OP_JUMP_IF_FALSE_OR_POP)
+        newInstruction = RAK_OP_JUMP_IF_FALSE_OR_POP;
+      newAddress = currInstructionDest;
+      if (currInstructionOpCode == RAK_OP_JUMP_IF_TRUE_OR_POP || currInstructionOpCode == RAK_OP_JUMP_IF_TRUE)
+        newAddress = address + 1;
     }
+    else
+    {
+      newInstruction = RAK_OP_JUMP_IF_TRUE;
+      if (currInstructionOpCode == RAK_OP_JUMP_IF_TRUE_OR_POP)
+        newInstruction = RAK_OP_JUMP_IF_TRUE_OR_POP;
+      newAddress = currInstructionDest;
+      if (currInstructionOpCode == RAK_OP_JUMP_IF_FALSE_OR_POP || currInstructionOpCode == RAK_OP_JUMP_IF_FALSE)
+        newAddress = address + 1;
+    }
+#ifdef DEBUG
+    fprintf(stderr, "Repatch %x -> %x\n", patchedInstruction, newInstruction | (newAddress << 8));
+#endif
+    //repatch to new destination
+    chunk->instrs.data[item->address] = newInstruction | (newAddress << 8);
   }
 }
 
@@ -196,15 +214,18 @@ void repatch_jumps(Compiler *comp, RakChunk *chunk, int instruction, int address
   @brief Loop all pending items searching for given label and patch those instructions to point
     to given address.
 
-  Use only with "jump_if_true" and "jump_if_false" instructions!
+  Use only with "jump_if_true", "jump_if_false", "jump_if_true_or_pop", "jump_if_false_or_pop" instructions!
   */
-void patch_pending_jump(Compiler *comp, RakChunk *chunk, Label label, int address)
+void patch_pending_jump(Compiler *comp, RakChunk *chunk, Label label, uint16_t address)
 {
   for (LabelTuple *item = comp->patchList.base; item <= comp->patchList.top; ++item)
   {
     if (item->label != label) continue;
-    int instruction = chunk->instrs.data[item->address];
-    instruction = (instruction & 0xFF) | ((uint16_t) address << 8);
+    uint32_t instruction = chunk->instrs.data[item->address];
+    instruction = (instruction & 0xFF) | (address << 8);
+#ifdef DEBUG
+    fprintf(stderr, "Patch %x -> %x\n", chunk->instrs.data[item->address], instruction);
+#endif
     chunk->instrs.data[item->address] = instruction;
     repatch_jumps(comp, chunk, instruction, item->address);
   }
@@ -213,11 +234,11 @@ void patch_pending_jump(Compiler *comp, RakChunk *chunk, Label label, int addres
 /**
   @brief Insert a new jump instruction that is needed to be patched later.
   */
-void add_pending_jump(Compiler *comp, RakChunk *chunk, Label label, int address, int instr, RakError *err)
+void add_pending_jump(Compiler *comp, RakChunk *chunk, Label label, uint16_t address, uint32_t instr, RakError *err)
 {
   if (rak_stack_is_full(&comp->patchList))
   {
-    rak_error_set(err, "patchBuffer is full");
+    rak_error_set(err, "patchList is full");
     return;
   }
   rak_stack_push(&comp->patchList, (LabelTuple) {address, label});
