@@ -8,13 +8,8 @@
 // located in the root directory of this project.
 //
 
-// #define DEBUG
-
 #include "rak/compiler.h"
 #include <stdint.h>
-#ifdef DEBUG
-#include <stdio.h>
-#endif
 #include <stdlib.h>
 #include <string.h>
 #include "rak/builtin.h"
@@ -202,9 +197,6 @@ void repatch_jumps(Compiler *comp, RakChunk *chunk, uint32_t instruction, uint16
       if (currInstructionOpCode == RAK_OP_JUMP_IF_FALSE_OR_POP || currInstructionOpCode == RAK_OP_JUMP_IF_FALSE)
         newAddress = address + 1;
     }
-#ifdef DEBUG
-    fprintf(stderr, "Repatch %x -> %x\n", patchedInstruction, newInstruction | (newAddress << 8));
-#endif
     //repatch to new destination
     chunk->instrs.data[item->address] = newInstruction | (newAddress << 8);
   }
@@ -223,9 +215,6 @@ void patch_pending_jump(Compiler *comp, RakChunk *chunk, Label label, uint16_t a
     if (item->label != label) continue;
     uint32_t instruction = chunk->instrs.data[item->address];
     instruction = (instruction & 0xFF) | (address << 8);
-#ifdef DEBUG
-    fprintf(stderr, "Patch %x -> %x\n", chunk->instrs.data[item->address], instruction);
-#endif
     chunk->instrs.data[item->address] = instruction;
     repatch_jumps(comp, chunk, instruction, item->address);
   }
